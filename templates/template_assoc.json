@@ -1,0 +1,31 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Allocation EIP is associated to instance",
+    "Parameters": {
+        "ID" : {
+            "Description" : "InstanceId",
+            "Type": "String",
+            "Default": "i-xxxxx"
+        },
+        "AID" : {
+            "Description" : "AllocationID",
+            "Type": "String",
+            "Default": "eipalloc-xxxxx"
+        }
+    },
+    "Resources": {
+      "VpcIPAssoc" : {
+         "Type" : "AWS::EC2::EIPAssociation",
+         "Properties" : {
+             "InstanceId" : { "Ref" : "ID" },
+             "AllocationId" : {  "Ref" : "AID" }
+         }
+      }
+    },
+    "Outputs": {
+       "VpcIPAssoc" : {
+            "Description" : "VpcIPAssoc",
+            "Value" : {"Ref" : "VpcIPAssoc"}
+       }
+    }
+}

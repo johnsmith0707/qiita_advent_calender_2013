@@ -1,0 +1,191 @@
+{
+    "AWSTemplateFormatVersion" : "2010-09-09",
+    "Description": "SampleVPC",
+    "Parameters": {
+        "VPCCidrBlock": {
+            "Description": "CidrBlock of VPC",
+            "Type": "String",
+            "Default": "10.0.0.0/16"
+        }
+    },
+    "Mappings": {
+        "RegionMap" :{
+            "ap-northeast-1": {"AZleft": "ap-northeast-1a", "AZright": "ap-northeast-1c" }
+        },
+        "SubnetMap" : {
+            "public"      : {"AZleft": "10.0.1.0/24",  "AZright": "10.0.3.0/24"}
+        },
+        "TrustNetworkMap" : {
+            "office"       : {"CidrIp": "xxx.xxx.xxx.xxx/32"},
+            "sdc"             : {"CidrIp": "xx.xxx.xxx.xxx/32"}
+        }
+    },
+    "Resources" : {
+        "VPC" : {
+            "Type" : "AWS::EC2::VPC",
+            "Properties" : {
+                "CidrBlock" : { "Ref" : "VPCCidrBlock" },
+                "InstanceTenancy" :"default"
+            }
+        },
+        "GatewayRouteTableLeft" : {
+            "Type" : "AWS::EC2::RouteTable",
+            "Properties" : {
+                "VpcId" : { "Ref" : "VPC" }
+            }
+        },
+        "GatewayRouteTableRight" : {
+            "Type" : "AWS::EC2::RouteTable",
+            "Properties" : {
+                "VpcId" : { "Ref" : "VPC" }
+            }
+        },
+        "InternetGateway" : {
+            "Type" : "AWS::EC2::InternetGateway",
+            "Properties" : {
+            }
+        },
+        "GatewayToInternet" : {
+            "Type" : "AWS::EC2::VPCGatewayAttachment",
+            "Properties" : {
+                "VpcId" : { "Ref" : "VPC" },
+                "InternetGatewayId" : {"Ref" : "InternetGateway"}
+            }
+        },
+        "GatewayRouteLeft" : {
+            "Type" : "AWS::EC2::Route",
+            "Properties" : {
+                "RouteTableId" : { "Ref" : "GatewayRouteTableLeft" },
+                "DestinationCidrBlock" : "0.0.0.0/0",
+                "GatewayId" : { "Ref" : "InternetGateway" }
+            }
+        },
+        "GatewayRouteRight" : {
+            "Type" : "AWS::EC2::Route",
+            "Properties" : {
+                "RouteTableId" : { "Ref" : "GatewayRouteTableRight" },
+                "DestinationCidrBlock" : "0.0.0.0/0",
+                "GatewayId" : { "Ref" : "InternetGateway" }
+            }
+        },
+        "BaseSecurityGroup" :{
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "GroupDescription" : "BaseSecurityGroup",
+                "VpcId" : {"Ref" : "VPC"},
+                "SecurityGroupIngress" : [
+                {
+                    "IpProtocol" : "tcp",
+                    "FromPort" : "22",
+                    "ToPort" : "22",
+                    "CidrIp" : { "Fn::FindInMap": [ "TrustNetworkMap", "sdc", "CidrIp" ] }
+                },
+                {
+                    "IpProtocol" : "tcp",
+                    "FromPort" : "22",
+                    "ToPort" : "22",
+                    "CidrIp" : { "Fn::FindInMap": [ "TrustNetworkMap", "office", "CidrIp" ] }
+                }
+                ],
+                "SecurityGroupEgress" : [{
+                    "IpProtocol" : "-1",
+                    "FromPort" : "-1",
+                    "ToPort" : "-1",
+                    "CidrIp" : "0.0.0.0/0"
+                }]
+            }
+        },
+        "SampleSecurityGroup" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "GroupDescription" : "SampleSecurityGroup",
+                "VpcId" : {"Ref" : "VPC"},
+                "SecurityGroupIngress" : [
+                {
+                    "IpProtocol" : "tcp",
+                    "FromPort" : "80",
+                    "ToPort" : "80",
+                    "CidrIp" : { "Fn::FindInMap": [ "TrustNetworkMap", "sdc", "CidrIp" ] }
+                },
+                {
+                    "IpProtocol" : "tcp",
+                    "FromPort" : "80",
+                    "ToPort" : "80",
+                    "CidrIp" : { "Fn::FindInMap": [ "TrustNetworkMap", "office", "CidrIp" ] }
+                },
+                {
+                    "IpProtocol" : "tcp",
+                    "FromPort" : "443",
+                    "ToPort" : "443",
+                    "CidrIp" : { "Fn::FindInMap": [ "TrustNetworkMap", "sdc", "CidrIp" ] }
+                },
+                {
+                    "IpProtocol" : "tcp",
+                    "FromPort" : "443",
+                    "ToPort" : "443",
+                    "CidrIp" : { "Fn::FindInMap": [ "TrustNetworkMap", "office", "CidrIp" ] }
+                }
+                ],
+                "SecurityGroupEgress" : [{
+                    "IpProtocol" : "-1",
+                    "FromPort" : "-1",
+                    "ToPort" : "-1",
+                    "CidrIp" : "0.0.0.0/0"
+                }]
+            }
+        },
+        "SampleSubnetLeft" :{
+            "Type" : "AWS::EC2::Subnet",
+            "Properties" : {
+                "VpcId" : { "Ref" : "VPC" },
+                "CidrBlock" : { "Fn::FindInMap": [ "SubnetMap", "public", "AZleft" ] },
+                "AvailabilityZone" : { "Fn::FindInMap": [ "RegionMap", { "Ref": "AWS::Region" }, "AZleft" ] }
+            }
+        },
+        "SampleSubnetRight" :{
+            "Type" : "AWS::EC2::Subnet",
+            "Properties" : {
+                "VpcId" : { "Ref" : "VPC" },
+                "CidrBlock" : { "Fn::FindInMap": [ "SubnetMap", "public", "AZright" ] },
+                "AvailabilityZone" : { "Fn::FindInMap": [ "RegionMap", { "Ref": "AWS::Region" }, "AZright" ] }
+            }
+        },
+        "SampleSubnetLeftGatewayRouteTableAssociation" : {
+            "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties" : {
+                "SubnetId" : { "Ref" : "SampleSubnetLeft" },
+                "RouteTableId" : { "Ref" : "GatewayRouteTableLeft" }
+            }
+        },
+        "SampleSubnetRightGatewayRouteTableAssociation" : {
+            "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties" : {
+                "SubnetId" : { "Ref" : "SampleSubnetRight" },
+                "RouteTableId" : { "Ref" : "GatewayRouteTableRight" }
+            }
+        }
+    },
+    "Outputs": {
+        "VPC" : {
+            "Description" : "VPC",
+            "Value" : {"Ref" : "VPC"}
+        },
+        "AvailabilityZones" : {
+            "Value" : {"Fn::Join" : [ ",",
+                        [
+                            { "Fn::FindInMap": [ "RegionMap", { "Ref": "AWS::Region" }, "AZleft" ] },
+                            { "Fn::FindInMap": [ "RegionMap", { "Ref": "AWS::Region" }, "AZright" ] }
+                        ]
+                    ]}
+        },
+        "Sample" : {
+            "Description" : "SubnetLeft|SubnetRight|SampleSecurityGroup|BaseSecurityGroup",
+            "Value" : {"Fn::Join" : [ "|", [
+                        {"Ref" : "SampleSubnetLeft" },
+                        {"Ref" : "SampleSubnetRight" },
+                        {"Ref" : "SampleSecurityGroup"},
+                        {"Ref" : "BaseSecurityGroup" }
+                    ]]}
+        }
+    }
+}
