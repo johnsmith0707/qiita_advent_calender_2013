@@ -17,7 +17,7 @@
         },
         "TrustNetworkMap" : {
             "office"       : {"CidrIp": "xxx.xxx.xxx.xxx/32"},
-            "sdc"             : {"CidrIp": "xx.xxx.xxx.xxx/32"}
+            "remote"             : {"CidrIp": "xx.xxx.xxx.xxx/32"}
         }
     },
     "Resources" : {
@@ -78,7 +78,7 @@
                     "IpProtocol" : "tcp",
                     "FromPort" : "22",
                     "ToPort" : "22",
-                    "CidrIp" : { "Fn::FindInMap": [ "TrustNetworkMap", "sdc", "CidrIp" ] }
+                    "CidrIp" : { "Fn::FindInMap": [ "TrustNetworkMap", "remote", "CidrIp" ] }
                 },
                 {
                     "IpProtocol" : "tcp",
@@ -105,7 +105,7 @@
                     "IpProtocol" : "tcp",
                     "FromPort" : "80",
                     "ToPort" : "80",
-                    "CidrIp" : { "Fn::FindInMap": [ "TrustNetworkMap", "sdc", "CidrIp" ] }
+                    "CidrIp" : { "Fn::FindInMap": [ "TrustNetworkMap", "remote", "CidrIp" ] }
                 },
                 {
                     "IpProtocol" : "tcp",
@@ -117,7 +117,7 @@
                     "IpProtocol" : "tcp",
                     "FromPort" : "443",
                     "ToPort" : "443",
-                    "CidrIp" : { "Fn::FindInMap": [ "TrustNetworkMap", "sdc", "CidrIp" ] }
+                    "CidrIp" : { "Fn::FindInMap": [ "TrustNetworkMap", "remote", "CidrIp" ] }
                 },
                 {
                     "IpProtocol" : "tcp",
